@@ -20,6 +20,9 @@ public class MethodDocument {
     @FieldAnnotation(desc = "方法的访问路径")
     private List<String> path;
 
+    @FieldAnnotation(desc = "方法的访问路径URL")
+    private List<String> url;
+
     @FieldAnnotation(desc = "方法的修饰符属性")
     private int modifierValue;
 
@@ -98,5 +101,13 @@ public class MethodDocument {
 
     public void setPath(List<String> path) {
         this.path = path;
+    }
+
+    public List<String> getUrl() {
+        return url;
+    }
+
+    public void setUrl(List<String> url) {
+        this.url = url;
     }
 }

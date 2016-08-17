@@ -25,19 +25,21 @@ public class SpringMVCAnnotationUtils {
 
     private final static String BANK = "";
 
-    public static List<ClassDocument> getAllController(String packageName) throws IOException {
+    private final static String PATH_SPLT = "/";
+
+    public static List<ClassDocument> getAllController(String packageName, String domain, String suffix) throws IOException {
         List<ClassDocument> list = new ArrayList<ClassDocument>();
         List<Class<?>> controllerList = ClassUtils.getAnnotationClassList(packageName, Controller.class);
         for (Class<?> clazz : controllerList) {
             if (clazz.isAnnotationPresent(RequestMapping.class)) {
-                ClassDocument classDocument = getClassDocument(clazz);
+                ClassDocument classDocument = getClassDocument(clazz,domain,suffix);
                 list.add(classDocument);
             }
         }
         return list;
     }
 
-    private static ClassDocument getClassDocument(Class<?> clazz) {
+    private static ClassDocument getClassDocument(Class<?> clazz, String domain, String suffix) {
         ClassDocument classDocument = new ClassDocument();
         String packageName = clazz.getPackage().getName();
         String[] module = {};
@@ -51,7 +53,7 @@ public class SpringMVCAnnotationUtils {
             SpringDocument springDocument = clazz.getAnnotation(SpringDocument.class);
             module = springDocument.module();
             sort = springDocument.sort();
-            desc = StringUtils.isNotEmpty(springDocument.desc())?springDocument.desc():desc;
+            desc = StringUtils.isNotEmpty(springDocument.desc()) ? springDocument.desc() : desc;
         }
         classDocument.setIndex(sort);
         classDocument.setModule(Arrays.asList(module));
@@ -62,14 +64,34 @@ public class SpringMVCAnnotationUtils {
         List<FieldDocument> fieldDocuments = getFieldDocuments(clazz);
         classDocument.setFieldDocumentList(fieldDocuments);
         List<MethodDocument> methodDocuments = getMethodDocuments(clazz);
+        if(CollectionUtils.isNotEmpty(methodDocuments) && path != null && path.length > 0){
+            List<String> classPath = Arrays.asList(path);
+            setMethodPath(classPath,methodDocuments,domain,suffix);
+        }
         classDocument.setMethodDocumentList(methodDocuments);
         return classDocument;
     }
 
-    private static List<FieldDocument> getFieldDocuments(Class<?> clazz){
+    private static void setMethodPath(List<String> classPath,List<MethodDocument> methodDocuments, String domain, String suffix){
+        for(MethodDocument methodDocument:methodDocuments){
+            List<String> methodPath = methodDocument.getPath();
+            List<String> methodUrlList = new ArrayList<String>();
+            if(CollectionUtils.isNotEmpty(methodPath)){
+                for(String classUrl:classPath){
+                    for(String methodUrl:methodPath){
+                        String url = domain + PATH_SPLT + classUrl + PATH_SPLT + methodUrl + suffix;
+                        methodUrlList.add(url);
+                    }
+                }
+                methodDocument.setUrl(methodUrlList);
+            }
+        }
+    }
+
+    private static List<FieldDocument> getFieldDocuments(Class<?> clazz) {
         List<FieldDocument> list = new ArrayList<FieldDocument>();
         Field[] fields = clazz.getDeclaredFields();
-        if(fields != null && fields.length > 0) {
+        if (fields != null && fields.length > 0) {
             for (Field field : fields) {
                 FieldDocument fieldDocument = getFieldDocument(field);
                 list.add(fieldDocument);
@@ -78,17 +100,17 @@ public class SpringMVCAnnotationUtils {
         return list;
     }
 
-    private static FieldDocument getFieldDocument(Field field){
+    private static FieldDocument getFieldDocument(Field field) {
         FieldDocument fieldDocument = new FieldDocument();
         String name = field.getName();
         Class<?> fieldClass = field.getType();
         int modifierValue = field.getModifiers();
         String desc = BANK;
         int sort = 0;
-        if(field.isAnnotationPresent(FieldAnnotation.class)){
+        if (field.isAnnotationPresent(FieldAnnotation.class)) {
             FieldAnnotation fieldAnnotation = field.getAnnotation(FieldAnnotation.class);
             sort = fieldAnnotation.sort();
-            desc = StringUtils.isNotEmpty(fieldAnnotation.desc())?fieldAnnotation.desc():desc;
+            desc = StringUtils.isNotEmpty(fieldAnnotation.desc()) ? fieldAnnotation.desc() : desc;
         }
         fieldDocument.setIndex(sort);
         fieldDocument.setName(name);
@@ -98,11 +120,11 @@ public class SpringMVCAnnotationUtils {
         return fieldDocument;
     }
 
-    private static List<MethodDocument> getMethodDocuments(Class<?> clazz){
+    private static List<MethodDocument> getMethodDocuments(Class<?> clazz) {
         List<MethodDocument> list = new ArrayList<MethodDocument>();
         Method[] methods = clazz.getDeclaredMethods();
-        if(methods != null && methods.length > 0){
-            for(Method method : methods){
+        if (methods != null && methods.length > 0) {
+            for (Method method : methods) {
                 MethodDocument methodDocument = getMethodDocument(method);
                 list.add(methodDocument);
             }
@@ -110,21 +132,21 @@ public class SpringMVCAnnotationUtils {
         return list;
     }
 
-    private static MethodDocument getMethodDocument(Method method){
+    private static MethodDocument getMethodDocument(Method method) {
         MethodDocument methodDocument = new MethodDocument();
         String name = method.getName();
         int sort = 0;
         String desc = BANK;
         String[] path = {};
         Class<?> methodClass = method.getReturnType();
-        if(method.isAnnotationPresent(RequestMapping.class)){
+        if (method.isAnnotationPresent(RequestMapping.class)) {
             RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
             desc = requestMapping.name();
             path = requestMapping.value().length > 0 ? requestMapping.value() : requestMapping.path();
         }
-        if(method.isAnnotationPresent(MethodAnnotation.class)){
+        if (method.isAnnotationPresent(MethodAnnotation.class)) {
             MethodAnnotation methodAnnotation = method.getAnnotation(MethodAnnotation.class);
-            desc = StringUtils.isNotEmpty(methodAnnotation.desc()) ? methodAnnotation.desc():desc;
+            desc = StringUtils.isNotEmpty(methodAnnotation.desc()) ? methodAnnotation.desc() : desc;
             sort = methodAnnotation.sort();
             methodClass = methodAnnotation.baseClass();
         }
@@ -134,13 +156,13 @@ public class SpringMVCAnnotationUtils {
         methodDocument.setPath(Arrays.asList(path));
         methodDocument.setModifierValue(method.getModifiers());
         methodDocument.setReturnClass(methodClass);
-        if(method.isAnnotationPresent(ResponseBody.class)){
+        if (method.isAnnotationPresent(ResponseBody.class)) {
             methodDocument.setIsJson(true);
-        }else{
+        } else {
             methodDocument.setIsJson(false);
         }
         Parameter[] parameters = method.getParameters();
-        if(parameters != null && parameters.length > 0) {
+        if (parameters != null && parameters.length > 0) {
             LocalVariableTableParameterNameDiscoverer loadParameter = new LocalVariableTableParameterNameDiscoverer();
             String[] parameterNames = loadParameter.getParameterNames(method);
             List<ParameterDocument> list = getParameterDocuments(parameters, parameterNames);
@@ -149,27 +171,27 @@ public class SpringMVCAnnotationUtils {
         return methodDocument;
     }
 
-    private static List<ParameterDocument> getParameterDocuments(Parameter[] parameters,String[] parameterNames){
+    private static List<ParameterDocument> getParameterDocuments(Parameter[] parameters, String[] parameterNames) {
         List<ParameterDocument> list = new ArrayList<ParameterDocument>(parameters.length);
-        for(int index = 0;index< parameters.length;index++){
+        for (int index = 0; index < parameters.length; index++) {
             ParameterDocument parameterDocument = new ParameterDocument();
             Parameter parameter = parameters[index];
             String value = parameterNames[index];
             String desc = BANK;
             boolean required = true;
             String defaultValue = BANK;
-            if(parameter.isAnnotationPresent(RequestParam.class)){
+            if (parameter.isAnnotationPresent(RequestParam.class)) {
                 RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
                 value = StringUtils.isNotBlank(requestParam.value()) ? requestParam.value() : value;
                 desc = requestParam.name();
                 String defaultString = requestParam.defaultValue();
-                if(StringUtils.isNotEmpty(defaultString)){
-                    if(!isDefaultValue(defaultString)){
+                if (StringUtils.isNotEmpty(defaultString)) {
+                    if (!isDefaultValue(defaultString)) {
                         defaultValue = defaultString;
-                    }else{
+                    } else {
                         defaultValue = null;
                     }
-                }else {
+                } else {
                     defaultValue = null;
                 }
                 required = requestParam.required();
@@ -185,17 +207,17 @@ public class SpringMVCAnnotationUtils {
         return list;
     }
 
-    private static boolean isDefaultValue(String defaultValue){
+    private static boolean isDefaultValue(String defaultValue) {
         char[] chars = defaultValue.toCharArray();
-        char[] isNull = new char[]{'\n','\t','\t','\n','\t','\t','\n','\uE000','\ue001','\ue002','\n','\t','\t','\t','\t','\n'};
-        if(chars.length == isNull.length){
-            for(int index = 0;index < isNull.length;index++){
-                if(isNull[index] != chars[index]){
+        char[] isNull = new char[]{'\n', '\t', '\t', '\n', '\t', '\t', '\n', '\uE000', '\ue001', '\ue002', '\n', '\t', '\t', '\t', '\t', '\n'};
+        if (chars.length == isNull.length) {
+            for (int index = 0; index < isNull.length; index++) {
+                if (isNull[index] != chars[index]) {
                     return false;
                 }
             }
             return true;
-        }else{
+        } else {
             return false;
         }
     }

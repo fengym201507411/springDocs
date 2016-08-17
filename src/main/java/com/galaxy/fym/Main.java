@@ -23,6 +23,6 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        List<ClassDocument> list = SpringMVCAnnotationUtils.getAllController("com.galaxy.fym");
+        List<ClassDocument> list = SpringMVCAnnotationUtils.getAllController("com.galaxy.fym","https://www.360haoyao.com",".htm");
     }
 }
