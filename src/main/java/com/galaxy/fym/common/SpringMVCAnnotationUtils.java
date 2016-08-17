@@ -27,6 +27,8 @@ public class SpringMVCAnnotationUtils {
 
     private final static String PATH_SPLT = "/";
 
+    private final static String[] EMPTY_STRINGARGS = {};
+
     public static List<ClassDocument> getAllController(String packageName, String domain, String suffix) throws IOException {
         List<ClassDocument> list = new ArrayList<ClassDocument>();
         List<Class<?>> controllerList = ClassUtils.getAnnotationClassList(packageName, Controller.class);
@@ -42,13 +44,11 @@ public class SpringMVCAnnotationUtils {
     private static ClassDocument getClassDocument(Class<?> clazz, String domain, String suffix) {
         ClassDocument classDocument = new ClassDocument();
         String packageName = clazz.getPackage().getName();
-        String[] module = {};
+        String[] module = EMPTY_STRINGARGS;
         int sort = 0;
-        String desc = BANK;
-        String[] path = {};
         RequestMapping requestMapping = clazz.getDeclaredAnnotation(RequestMapping.class);
-        path = requestMapping.value().length > 0 ? requestMapping.value() : requestMapping.path();
-        desc = requestMapping.name();
+        String[] path = requestMapping.value().length > 0 ? requestMapping.value() : requestMapping.path();
+        String desc = requestMapping.name();
         if (clazz.isAnnotationPresent(SpringDocument.class)) {
             SpringDocument springDocument = clazz.getAnnotation(SpringDocument.class);
             module = springDocument.module();
@@ -137,7 +137,7 @@ public class SpringMVCAnnotationUtils {
         String name = method.getName();
         int sort = 0;
         String desc = BANK;
-        String[] path = {};
+        String[] path = EMPTY_STRINGARGS;
         Class<?> methodClass = method.getReturnType();
         if (method.isAnnotationPresent(RequestMapping.class)) {
             RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
