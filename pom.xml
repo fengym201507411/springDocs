@@ -37,6 +37,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring.version>4.2.3.RELEASE</spring.version>
         <project.version>1.0.0.SNAPSHOT</project.version>
+        <!--修改项目的默认jdk版本-->
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
 
     <!--通过maven依赖jar包-->
@@ -180,4 +183,39 @@
         </dependency>
         <!--定时任务 end-->
     </dependencies>
+    <profiles>
+        <!--开发环境-->
+        <profile>
+            <id>dev</id>
+            <properties>
+                <env>dev</env>
+                <skipTests>true</skipTests>
+                <jdk>1.8</jdk>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <!--默认启用的是dev环境配置-->
+            </activation>
+        </profile>
+
+        <!--测试环境-->
+        <profile>
+            <id>test</id>
+            <properties>
+                <env>test</env>
+                <skipTests>true</skipTests>
+                <jdk>1.8</jdk>
+            </properties>
+        </profile>
+
+        <!--生产环境-->
+        <profile>
+            <id>production</id>
+            <properties>
+                <env>production</env>
+                <skipTests>true</skipTests>
+                <jdk>1.8</jdk>
+            </properties>
+        </profile>
+    </profiles>
 </project>
